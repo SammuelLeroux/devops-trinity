@@ -2,7 +2,7 @@
 FROM node:18-alpine AS builder
 
 # Installer les dépendances nécessaires pour la construction (si nécessaire, dépend de votre projet)
-RUN apk add --no-cache python3 make g++ 
+RUN apk add --no-cache python3 make g++ bash git
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Installer toutes les dépendances (y compris devDependencies)
-RUN npm install --production=false
+RUN npm ci
 
 # Copier le code source (uniquement ce qui est nécessaire pour la production)
 COPY . .
@@ -24,14 +24,14 @@ WORKDIR /app
 # Copier uniquement les fichiers nécessaires à l'exécution (depuis l'étape "builder")
 COPY --from=builder /app /app
 
+# Installer uniquement les dépendances de production (pas de devDependencies)
+RUN npm prune --production
+
 # Exposer le port utilisé par Metro Bundler (port par défaut : 8081)
 EXPOSE 8081
 
-# Nettoyer les fichiers inutiles pour la production (facultatif)
-RUN npm prune --production
-
-# Installation des dépendances de production seulement
-RUN npm install --only=production
+# Si le linting est nécessaire dans l'image finale, installer eslint et les plugins nécessaires
+RUN npm install --only=dev eslint eslint-plugin-prettier
 
 # Commande pour démarrer Metro Bundler en mode production
 CMD ["npx", "react-native", "start", "--reset-cache"]

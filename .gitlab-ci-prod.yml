@@ -118,24 +118,24 @@ test_backend-dashboard_prod:
       when: always
 
 
-deploy_front_to_dockerhub:
-  stage: deploy
-  image: docker:latest
-  variables:
-    DOCKER_HOST: unix:///var/run/docker.sock
-    DOCKER_TLS_CERTDIR: ""
-  script:
-    - echo "Pushing Docker images to Docker Hub..."
-    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-    - docker tag frontend-prod $DOCKER_FRONTEND_IMAGE
-    - docker push $DOCKER_FRONTEND_IMAGE
-  dependencies:
-    - clone_and_prepare_docker
-    - clone_and_prepare_repositories
-    - test_frontend_prod
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "trigger"'
-      when: always
+#deploy_front_to_dockerhub:
+ # stage: deploy
+  #image: docker:latest
+  #variables:
+  #  DOCKER_HOST: unix:///var/run/docker.sock
+  #  DOCKER_TLS_CERTDIR: ""
+  #script:
+  #  - echo "Pushing Docker images to Docker Hub..."
+  #  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  #  - docker tag frontend-prod $DOCKER_FRONTEND_IMAGE
+  #  - docker push $DOCKER_FRONTEND_IMAGE
+  #dependencies:
+   # - clone_and_prepare_docker
+  #  - clone_and_prepare_repositories
+  #  - test_frontend_prod
+  #rules:
+  #  - if: '$CI_PIPELINE_SOURCE == "trigger"'
+  #    when: always
 
 deploy_back_on_vercel:
   stage: deploy
@@ -166,7 +166,7 @@ deploy_to_expo:
     - npm install -g eas-cli
     - cd frontend || exit 1
     - echo "Publishing the app to Expo..."
-    - eas update --release-channel prod-v1 --non-interactive || { echo "EAS update failed"; exit 1; }
+    - eas update --non-interactive || { echo "EAS update failed"; exit 1; }
   dependencies:
     - clone_and_prepare_repositories
     - test_backend-dashboard_prod
