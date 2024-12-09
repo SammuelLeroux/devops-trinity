@@ -1,0 +1,26 @@
+# Utiliser une image Node avec une version spécifique (par exemple, 18)
+FROM node:18-alpine AS builder
+
+# Définir le dossier de travail
+WORKDIR /app
+
+# Copier les fichiers de configuration
+COPY package*.json ./
+
+# Installer les dépendances (environnement dev)
+RUN npm install
+
+# Copier le code source
+COPY . .
+
+# Installer Nodemon pour le redémarrage automatique du serveur pendant le développement
+RUN npm install -g nodemon
+
+# Compiler le TypeScript
+RUN npm run build
+
+# Exposer le port que votre application Express va utiliser (par défaut 3000)
+EXPOSE 4000
+
+# Commande pour démarrer l'API en mode développement
+CMD ["nodemon", "src/index.js"]

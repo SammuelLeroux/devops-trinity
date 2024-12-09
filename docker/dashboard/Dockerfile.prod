@@ -1,0 +1,35 @@
+# Étape de construction
+FROM node:18-alpine AS build
+
+# Définir le dossier de travail
+WORKDIR /app
+
+# Copier les fichiers de configuration
+COPY package*.json ./
+
+# Installer les dépendances (y compris celles de build)
+RUN npm install
+
+# Copier tout le code source
+COPY . .
+
+# Construire l'application avec Vite
+RUN npm run build-only
+
+# Étape de production (image plus légère)
+FROM node:18-alpine AS production
+
+# Définir le dossier de travail
+WORKDIR /app
+
+# Copier les fichiers nécessaires depuis l'étape de build
+COPY --from=build /app ./
+
+# Installer un serveur pour servir les fichiers statiques
+RUN npm install -g serve
+
+# Exposer le port pour l'application (par défaut 3000)
+EXPOSE 3000
+
+# Commande pour démarrer un serveur HTTP et servir les fichiers statiques générés
+CMD ["serve", "dist", "-s", "-l", "3000"]

@@ -1,0 +1,78 @@
+stages:
+  - lint
+  - clone
+  - build
+  - test
+  - deploy
+
+variables:
+  DOCKER_FRONTEND_IMAGE: "rlelouch/trinity:frontend-latest"
+  DOCKER_BACKEND_IMAGE: "rlelouch/trinity:backend-latest"
+  DOCKER_DRIVE: overlay2
+
+lint_ci_file:
+  stage: lint
+  script:
+    - echo "Validating .gitlab-ci.yml syntax..."
+    - |
+      JSON_CONTENT=$(cat .gitlab-ci.yml | sed 's/"/\\"/g' | tr '\n' ' ')
+      curl --header "Content-Type: application/json" \
+           --request POST \
+           --data "{\"content\": ${JSON_CONTENT}}" \
+           "https://gitlab.com/api/v4/ci/lint"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      changes:
+        - .gitlab-ci.yml
+        - .gitlab-ci.prod.yml
+        - .gitlab-ci.dev.yml
+      when: always
+
+clone_and_prepare_docker:
+  stage: clone
+  script:
+    - echo "Cloning the repository and preparing the docker folder..."
+    - git clone https://oauth2:$CI_ACCESS_TOKEN@t-dev.epitest.eu/STG_12/T-DEV-701-Devops.git repo
+    - cp -r repo/docker ./
+    - echo "Docker folder prepared:"
+    - ls -R docker
+  artifacts:
+    paths:
+      - docker
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "trigger"'
+      when: always
+
+# Clonage du dépôt frontend une seule fois
+clone_and_prepare_repositories:
+  stage: clone
+  script:
+    - echo "Cloning the frontend repository..."
+    - git clone https://oauth2:$CI_ACCESS_TOKEN@t-dev.epitest.eu/STG_12/T-DEV-703-Mobile.git frontend
+
+    - echo "Cloning the backend repository..."
+    - git clone https://oauth2:$CI_ACCESS_TOKEN@t-dev.epitest.eu/STG_12/T-DEV-702-Api.git backend
+
+    - echo "Copie Dockerfiles.*.yml"
+    - cp docker/frontend/* frontend/
+    - cp docker/dashboard/* backend/trinity-dashboard/
+    - cp docker/backend/* backend/trinity-api/
+
+    - echo "Dockerfiles.yml updated:"
+    - ls -R frontend/
+    - ls -R backend/trinity-api/
+    - ls -R backend/trinity-dashboard/
+  artifacts:
+    paths:
+      - frontend
+      - backend
+  dependencies:
+    - clone_and_prepare_docker
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "trigger"'
+      when: always
+
+# Inclusion conditionnelle de fichiers CI supplémentaires
+include:
+  - local: '.gitlab-ci-dev.yml'
+  - local: '.gitlab-ci-prod.yml'

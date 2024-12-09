@@ -1,0 +1,25 @@
+# Étape 1 : Construction
+FROM node:18-alpine AS builder
+
+# Installer les dépendances pour le build
+RUN apk add --no-cache bash git python3 make g++ 
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+RUN npm install -g npm@latest
+
+COPY . .
+
+# Étape 2 : Image finale plus légère
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app /app
+
+EXPOSE 8081
+
+CMD ["npx", "react-native", "start"]
