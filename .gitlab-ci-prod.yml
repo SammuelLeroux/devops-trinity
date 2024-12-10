@@ -117,26 +117,6 @@ test_backend-dashboard_prod:
     - if: '$CI_PIPELINE_SOURCE == "trigger"'
       when: always
 
-
-#deploy_front_to_dockerhub:
- # stage: deploy
-  #image: docker:latest
-  #variables:
-  #  DOCKER_HOST: unix:///var/run/docker.sock
-  #  DOCKER_TLS_CERTDIR: ""
-  #script:
-  #  - echo "Pushing Docker images to Docker Hub..."
-  #  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  #  - docker tag frontend-prod $DOCKER_FRONTEND_IMAGE
-  #  - docker push $DOCKER_FRONTEND_IMAGE
-  #dependencies:
-   # - clone_and_prepare_docker
-  #  - clone_and_prepare_repositories
-  #  - test_frontend_prod
-  #rules:
-  #  - if: '$CI_PIPELINE_SOURCE == "trigger"'
-  #    when: always
-
 deploy_back_on_vercel:
   stage: deploy
   script:
@@ -158,15 +138,32 @@ deploy_back_on_vercel:
 
 deploy_to_expo:
   stage: deploy
-  image: node:16
-  variables:
-    EXPO_TOKEN: $EXPO_TOKEN
+  image: node:18
   script:
     - echo "Installing Expo CLI..."
     - npm install -g eas-cli
+
+    - echo "Validating EAS CLI version..."
+    - eas --version
+
     - cd frontend || exit 1
+
+    - echo "Clearing npm cache to prevent conflicts..."
+    - npm cache clean --force
+    - rm -rf .expo
+    - rm -rf node_modules
+    - npm install
+
+    - echo "Verifying Expo configuration..."
+    - npx expo config --json --type public || { echo "Expo config check failed"; exit 1; }
+
+    - echo "Validating 'expo-router' resolution..."
+    - npm ls expo-router || { echo "'expo-router' is missing or unresolved"; exit 1; }
+    
     - echo "Publishing the app to Expo..."
-    - eas update --non-interactive || { echo "EAS update failed"; exit 1; }
+    - export NODE_OPTIONS="--max-old-space-size=4096"
+    - eas update --auto --non-interactive --platform ios || { echo "EAS Update ios failed"; exit 1; }
+    - eas update --auto --non-interactive --platform android || { echo "EAS Update android failed"; exit 1; }
   dependencies:
     - clone_and_prepare_repositories
     - test_backend-dashboard_prod
