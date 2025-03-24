@@ -1,0 +1,35 @@
+---
+log:
+  level: debug
+
+gitlab:
+  url: https://t-dev.epitest.eu/
+  token: "$GCPE_GITLAB_TOKEN"
+
+# Pull jobs related metrics on all projects
+project_defaults:
+  pull:
+    pipeline:
+      jobs:
+        enabled: true
+
+projects:
+  - name: STG_12/T-DEV-701-Devops  # Remplace par ton repo DevOps
+    pull:
+      environments:
+        enabled: true
+ 
+  - name: STG_12/T-DEV-702-Api  # Remplace par ton repo back-end
+    pull:
+      pipeline:
+        jobs:
+          enabled: true
+      environments:
+        enabled: true
+        # name_regexp: '^prod.*'  # Si tu veux surveiller les environnements "prod"
+
+  - name: STG_12/T-DEV-703-Mobile  # Remplace par ton repo front-end
+    pull:
+      pipeline:
+        jobs:
+          enabled: true  # Active la récupération des jobs des pipelines

@@ -9,9 +9,17 @@ variables:
   DOCKER_FRONTEND_IMAGE: "rlelouch/trinity:frontend-latest"
   DOCKER_BACKEND_IMAGE: "rlelouch/trinity:backend-latest"
   DOCKER_DRIVE: overlay2
+  DOCKER_HOST: "unix:///var/run/docker.sock"
+  DOCKER_TLS_CERTDIR: ""
+  
+services:
+  - docker:20.10.8-dind
 
 lint_ci_file:
   stage: lint
+  image: debian:latest
+  before_script:
+    - apt update && apt install -y curl
   script:
     - echo "Validating .gitlab-ci.yml syntax..."
     - |
@@ -30,6 +38,9 @@ lint_ci_file:
 
 clone_and_prepare_docker:
   stage: clone
+  image: debian:latest
+  before_script:
+    - apt update && apt install -y git
   script:
     - echo "Cloning the repository and preparing the docker folder..."
     - git clone https://oauth2:$CI_ACCESS_TOKEN@t-dev.epitest.eu/STG_12/T-DEV-701-Devops.git repo
@@ -46,6 +57,9 @@ clone_and_prepare_docker:
 # Clonage du dépôt frontend une seule fois
 clone_and_prepare_repositories:
   stage: clone
+  image: debian:latest
+  before_script:
+    - apt update && apt install -y git
   script:
     - echo "Cloning the frontend repository..."
     - git clone https://oauth2:$CI_ACCESS_TOKEN@t-dev.epitest.eu/STG_12/T-DEV-703-Mobile.git frontend

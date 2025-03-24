@@ -1,9 +1,6 @@
 build_frontend_dev:
   stage: build
   image: docker:latest
-  variables:
-    DOCKER_HOST: unix:///var/run/docker.sock
-    DOCKER_TLS_CERTDIR: ""
   script:
     - echo "Using docker for the frontend..."
     - cd frontend
@@ -21,8 +18,6 @@ build_backend-api_dev:
   stage: build
   image: docker:latest
   variables:
-    DOCKER_HOST: unix:///var/run/docker.sock
-    DOCKER_TLS_CERTDIR: ""
     NODE_ENV: "development"
   script:
     - echo "Using docker for the backend..."
@@ -41,8 +36,6 @@ build_backend-dashboard_dev:
   stage: build
   image: docker:latest
   variables:
-    DOCKER_HOST: unix:///var/run/docker.sock
-    DOCKER_TLS_CERTDIR: ""
     NODE_ENV: "development"
   script:
     - echo "Using docker for the backend..."
@@ -62,8 +55,6 @@ test_frontend_dev:
   stage: test
   image: docker:latest
   variables:
-    DOCKER_HOST: unix:///var/run/docker.sock
-    DOCKER_TLS_CERTDIR: ""
   script:
     - cd frontend
     - echo "Installing dependencies..."
@@ -74,12 +65,18 @@ test_frontend_dev:
     - docker run --rm frontend:dev npm run lint
     - echo "Running tests on the frontend image..."
     - |
-      if docker run --rm frontend:dev npm run test; then
+      if docker run --rm frontend:dev npm run test:coverage; then
         echo "Tests passed or no tests present."
       else
         echo "Tests failed or not configured, but ignoring the failure."
         exit 0  # Ignore test failures if not critical
       fi
+  artifacts:
+    when: always
+    reports:
+      junit: frontend/reports/junit/js-test-results.xml
+    paths:
+      - frontend/reports/junit/
   dependencies:
     - clone_and_prepare_docker
     - clone_and_prepare_repositories
@@ -92,9 +89,6 @@ test_frontend_dev:
 test_backend-dashboard_dev:
   stage: test
   image: docker:latest
-  variables:
-    DOCKER_HOST: unix:///var/run/docker.sock
-    DOCKER_TLS_CERTDIR: ""
   script:
     - cd backend/trinity-dashboard
     - echo "Building Docker image for dashboard..."

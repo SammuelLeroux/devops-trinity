@@ -1,5 +1,5 @@
 # Étape 1 : Construction
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 # Installer les dépendances nécessaires pour la construction (si nécessaire, dépend de votre projet)
 RUN apk add --no-cache python3 make g++ bash git
@@ -16,7 +16,7 @@ RUN npm ci
 COPY . .
 
 # Étape 2 : Image finale plus légère (production)
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Définir le dossier de travail
 WORKDIR /app

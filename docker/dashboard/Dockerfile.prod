@@ -1,5 +1,5 @@
 # Étape de construction
-FROM node:18-alpine AS build
+FROM node:20-alpine AS build
 
 # Définir le dossier de travail
 WORKDIR /app
@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build-only
 
 # Étape de production (image plus légère)
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
 # Définir le dossier de travail
 WORKDIR /app
